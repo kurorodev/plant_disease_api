@@ -2,7 +2,7 @@ import random
 import os
 from PIL import Image
 import numpy as np
-from inference_sdk import InferenceHTTPClient
+from inference_sdk import InferenceHTTPClient, InferenceConfiguration
 
 class TreeDetector:
     def __init__(self):
@@ -31,8 +31,8 @@ class TreeDetector:
             self.is_loaded = False
             return False
     
-    def detect(self, image: np.ndarray) -> list:
-        """Основной метод детекции"""
+    def detect(self, image: np.ndarray, confidence_threshold: float = 0.1) -> list:
+        """Основной метод детекции с настраиваемым порогом уверенности"""
         # Если клиент не инициализирован, используем заглушку
         if not self.is_loaded:
             print("Using stub detection - model not loaded")
@@ -62,8 +62,14 @@ class TreeDetector:
             else:
                 raise ValueError(f"Unsupported image type: {type(image)}")
             
-            # Выполняем инференс
-            result = self.client.infer(temp_path, model_id=self.model_id)
+            # Создаем конфигурацию с низким порогом уверенности :cite[4]
+            low_confidence_config = InferenceConfiguration(
+                confidence_threshold=confidence_threshold  # Низкий порог = больше обнаружений
+            )
+            
+            # Выполняем инференс с указанной конфигурацией :cite[4]
+            with self.client.use_configuration(low_confidence_config):
+                result = self.client.infer(temp_path, model_id=self.model_id)
             
             # Обрабатываем результат
             if isinstance(image, Image.Image):
@@ -77,7 +83,7 @@ class TreeDetector:
             if os.path.exists(temp_path):
                 os.remove(temp_path)
             
-            print(f"Detection completed: found {len(detections)} objects")
+            print(f"Detection completed: found {len(detections)} objects with confidence threshold {confidence_threshold}")
             return detections
             
         except Exception as e:
@@ -156,8 +162,23 @@ class TreeDetector:
             
             detections.append({
                 "class": random.choice(self.classes),
-                "confidence": round(random.uniform(0.7, 0.99), 2),
+                "confidence": round(random.uniform(0.3, 0.7), 2),  # Пониженная уверенность для заглушки
                 "bbox": [x, y, x + w, y + h]
             })
         
         return detections
+
+# Пример использования
+if __name__ == "__main__":
+    detector = TreeDetector()
+    detector.load_model()
+    
+    # Пример с изображением
+    image = Image.open("your_image.jpg")  # Замените на путь к вашему изображению
+    
+    # Детекция с очень низким порогом уверенности (0.1 = 10%)
+    detections = detector.detect(image, confidence_threshold=0.1)
+    
+    print(f"Найдено объектов: {len(detections)}")
+    for detection in detections:
+        print(f"Класс: {detection['class']}, Уверенность: {detection['confidence']}, BBox: {detection['bbox']}")
