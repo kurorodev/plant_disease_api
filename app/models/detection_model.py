@@ -31,7 +31,7 @@ class TreeDetector:
             self.is_loaded = False
             return False
     
-    def detect(self, image: np.ndarray, confidence_threshold: float = 0.5) -> list:
+    def detect(self, image: np.ndarray, confidence_threshold: float = 0.1) -> list:
         """Основной метод детекции с настраиваемым порогом уверенности"""
         # Если клиент не инициализирован, используем заглушку
         if not self.is_loaded:
@@ -167,18 +167,3 @@ class TreeDetector:
             })
         
         return detections
-
-# Пример использования
-if __name__ == "__main__":
-    detector = TreeDetector()
-    detector.load_model()
-    
-    # Пример с изображением
-    image = Image.open("your_image.jpg")  # Замените на путь к вашему изображению
-    
-    # Детекция с очень низким порогом уверенности (0.1 = 10%)
-    detections = detector.detect(image, confidence_threshold=0.1)
-    
-    print(f"Найдено объектов: {len(detections)}")
-    for detection in detections:
-        print(f"Класс: {detection['class']}, Уверенность: {detection['confidence']}, BBox: {detection['bbox']}")
