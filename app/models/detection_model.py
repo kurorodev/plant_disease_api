@@ -31,7 +31,7 @@ class TreeDetector:
             self.is_loaded = False
             return False
     
-    def detect(self, image: np.ndarray, confidence_threshold: float = 0.1) -> list:
+    def detect(self, image: np.ndarray, confidence_threshold: float = 0.5) -> list:
         """Основной метод детекции с настраиваемым порогом уверенности"""
         # Если клиент не инициализирован, используем заглушку
         if not self.is_loaded:
